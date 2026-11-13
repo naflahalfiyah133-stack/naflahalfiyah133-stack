@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Kedisiplinan Santri - MA PERSIS 38 Padalarang</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .active-tab {
+            border-bottom: 3px solid #16a34a;
+            color: #16a34a;
+            font-weight: 600;
+        }
+        @keyframes scanline {
+            0% { top: 0%; }
+            50% { top: 85%; }
+            100% { top: 0%; }
+        }
+        .scan-animation {
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            background: rgba(34, 197, 94, 0.85);
+            box-shadow: 0 0 15px #22c55e;
+            animation: scanline 2.5s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Toast Notification Banner -->
+    <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2 max-w-md w-full px-4 pointer-events-none"></div>
+
+    <!-- Header & Navbar -->
+    <header class="bg-gradient-to-r from-brand-900 via-brand-800 to-emerald-950 text-white shadow-xl sticky top-0 z-40 border-b border-brand-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <!-- Branding -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-md border border-white/20 shadow-inner">
+                        <i class="fa-solid fa-graduation-cap text-2xl text-emerald-300"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-extrabold text-lg leading-tight text-white tracking-wide">MA PERSIS 38 PADALARANG</h1>
+                        <p class="text-xs text-emerald-200 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Database IndexedDB Aktif
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Simulation Role Switcher Bar -->
+                <div class="bg-brand-950/70 backdrop-blur-md p-1.5 rounded-xl border border-white/10 flex flex-wrap items-center justify-center gap-1 shadow-inner">
+                    <span class="text-xs text-emerald-200 px-2 font-medium hidden lg:inline">
+                        <i class="fa-solid fa-user-gear mr-1"></i> Peran View:
+                    </span>
+                    <button onclick="switchRole('santri')" id="nav-santri" class="role-btn px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 bg-brand-600 text-white shadow">
+                        <i class="fa-solid fa-user-graduate"></i> Santri
+                    </button>
+                    <button onclick="switchRole('bk')" id="nav-bk" class="role-btn px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 text-emerald-100 hover:bg-white/10">
+                        <i class="fa-solid fa-user-doctor"></i> Guru BK
+                        <span id="badge-bk" class="hidden bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">0</span>
+                    </button>
+                    <button onclick="switchRole('kesiswaan')" id="nav-kesiswaan" class="role-btn px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 text-emerald-100 hover:bg-white/10">
+                        <i class="fa-solid fa-shield-halved"></i> Kesiswaan
+                        <span id="badge-kesiswaan" class="hidden bg-amber-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">0</span>
+                    </button>
+                    <button onclick="switchRole('ortu')" id="nav-ortu" class="role-btn px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 text-emerald-100 hover:bg-white/10">
+                        <i class="fa-solid fa-users-between-lines"></i> Orang Tua
+                        <span id="badge-ortu" class="hidden bg-sky-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">0</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ==================== 1. ROLE SANTRI (SCAN BARCODE & LOGIN PRESENSI) ==================== -->
+        <section id="role-santri-section" class="space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- COVER & SCANNER BARCODE SIMULATOR -->
+                <div class="lg:col-span-5 space-y-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 text-center space-y-4">
+                        <div class="flex items-center justify-between border-b pb-3 border-slate-100">
+                            <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-qrcode text-brand-600 text-base"></i> Cover Scan Barcode Kartu Santri
+                            </h2>
+                            <span class="text-[10px] font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full">Auto-Detect NIS</span>
+                        </div>
+
+                        <!-- Scanner Visual Box -->
+                        <div class="relative w-full h-48 bg-slate-900 rounded-xl overflow-hidden flex flex-col items-center justify-center border-2 border-dashed border-emerald-500 shadow-inner group">
+                            <div class="scan-animation" id="scanLine"></div>
+                            <i class="fa-solid fa-barcode text-5xl text-emerald-400 opacity-80 mb-2"></i>
+                            <p class="text-xs text-slate-300 font-medium px-4">Arahkan Kartu Santri / Barcode ke Kamera Simulator</p>
+                            <span class="text-[10px] text-emerald-400 font-mono mt-1">Status: Siap Memindai...</span>
+                            
+                            <!-- Overlay Flash Effect -->
+                            <div id="scanFlash" class="absolute inset-0 bg-white opacity-0 pointer-events-none transition-opacity duration-200"></div>
+                        </div>
+
+                        <!-- Fast Barcode Simulator Selector -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-semibold text-slate-600 text-left">Simulasi Scan Cepat Santri:</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button type="button" onclick="simulateScan('2024001')" class="text-left px-3 py-2 bg-slate-50 hover:bg-emerald-50 border border-slate-200 rounded-xl transition text-xs font-medium text-slate-700">
+                                    <i class="fa-solid fa-id-card text-brand-600 mr-1"></i> Ahmad Fauzi
+                                </button>
+                                <button type="button" onclick="simulateScan('2024002')" class="text-left px-3 py-2 bg-slate-50 hover:bg-emerald-50 border border-slate-200 rounded-xl transition text-xs font-medium text-slate-700">
+                                    <i class="fa-solid fa-id-card text-brand-600 mr-1"></i> Siti Maryam
+                                </button>
+                                <button type="button" onclick="simulateScan('2024003')" class="text-left px-3 py-2 bg-slate-50 hover:bg-emerald-50 border border-slate-200 rounded-xl transition text-xs font-medium text-slate-700">
+                                    <i class="fa-solid fa-id-card text-brand-600 mr-1"></i> Muhammad Rizky
+                                </button>
+                                <button type="button" onclick="simulateScan('2024004')" class="text-left px-3 py-2 bg-slate-50 hover:bg-emerald-50 border border-slate-200 rounded-xl transition text-xs font-medium text-slate-700">
+                                    <i class="fa-solid fa-id-card text-brand-600 mr-1"></i> Farah Annisa
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FORM LOGIN & PRESENSI SANTRI -->
+                <div class="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-5">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <div>
+                            <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-right-to-bracket text-brand-600"></i> Form Login Presensi Santri
+                            </h2>
+                            <p class="text-xs text-slate-500">Input data atau hasil scan barcode akan langsung tercatat waktu kedatangannya.</p>
+                        </div>
+                        <span class="text-xs font-semibold px-3 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded-full">
+                            Batas Masuk: <b>07:00 WIB</b>
+                        </span>
+                    </div>
+
+                    <form id="presensiForm" onsubmit="handleSantriLogin(event)" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Nomor Induk Santri (NIS)</label>
+                                <input type="text" id="nisInput" required placeholder="Masukkan NIS Santri..." class="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none transition">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Lengkap Santri</label>
+                                <input type="text" id="namaInput" required placeholder="Masukkan Nama Santri..." class="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none transition">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Kata Sandi / Password Presensi</label>
+                            <div class="relative">
+                                <input type="password" id="passwordInput" required placeholder="Ketik kata sandi santri..." class="w-full text-sm border border-slate-300 rounded-xl p-2.5 pr-10 focus:ring-2 focus:ring-brand-500 focus:outline-none transition">
+                                <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none">
+                                    <i id="passwordEyeIcon" class="fa-solid fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="block text-xs font-semibold text-slate-700">Timestamp Login & Waktu Kedatangan</label>
+                                <button type="button" onclick="setCurrentTime()" class="text-[11px] text-brand-600 font-semibold hover:underline">
+                                    <i class="fa-solid fa-rotate mr-0.5"></i> Set Waktu Sekarang
+                                </button>
+                            </div>
+                            <input type="time" id="waktuInput" required class="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none font-mono">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Alasan Keterlambatan <span class="text-slate-400 font-normal">(wajib diisi jika lewat pukul 07:00)</span></label>
+                            <textarea id="alasanInput" rows="2" placeholder="Tuliskan alasan jika terlambat datang ke pesantren..." class="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
+                        </div>
+
+                        <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:shadow-lg transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-right-to-bracket"></i> Simpan Presensi & Kirim Laporan [Tekan Enter]
+                        </button>
+                    </form>
+                </div>
+
+                <!-- RIWAYAT LIVE LOG PRESENSI INDEXEDDB -->
+                <div class="lg:col-span-12 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3 border-slate-100">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-database text-brand-600"></i> Riwayat Presensi Realtime (Data IndexedDB)
+                            </h3>
+                            <p class="text-xs text-slate-500">Seluruh data tersimpan di browser IndexedDB secara persisten.</p>
+                        </div>
+                        <button onclick="resetIndexedDBData()" class="text-xs text-rose-600 hover:text-rose-800 font-medium flex items-center gap-1 border border-rose-200 bg-rose-50 px-3 py-1.5 rounded-lg">
+                            <i class="fa-solid fa-rotate-left"></i> Seed / Reset Database Demo
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-600">
+                            <thead class="bg-slate-50 text-slate-700 uppercase font-semibold border-b border-slate-200">
+                                <tr>
+                                    <th class="py-3 px-3">Timestamp / Waktu</th>
+                                    <th class="py-3 px-3">NIS & Nama Santri</th>
+                                    <th class="py-3 px-3">Kelas</th>
+                                    <th class="py-3 px-3">Status</th>
+                                    <th class="py-3 px-3">Alur Terusan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="presensiTableBody" class="divide-y divide-slate-100">
+                                <!-- Dynamic IndexedDB Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- ==================== 2. ROLE GURU BK ==================== -->
+        <section id="role-bk-section" class="hidden space-y-6">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-user-doctor text-emerald-600"></i> Dashboard Guru Bimbingan Konseling (BK)
+                    </h2>
+                    <p class="text-xs text-slate-500">Menerima otomatis laporan login santri yang terlambat (> 07:00), melakukan konseling awal, dan meneruskan ke Kesiswaan.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="bg-amber-50 border border-amber-200 text-amber-800 px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-2">
+                        <i class="fa-solid fa-bell text-amber-600"></i>
+                        <span>Menunggu Konseling BK: <b id="bkPendingCount">0</b> Santri</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                    <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-rose-500"></i> Daftar Laporan Santri Terlambat Masuk
+                    </h3>
+                    <span class="text-xs text-slate-500">Data bersumber dari IndexedDB</span>
+                </div>
+
+                <div class="divide-y divide-slate-100" id="bkListContainer">
+                    <!-- Dynamic BK Items -->
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ==================== 3. ROLE KESISWAAN ==================== -->
+        <section id="role-kesiswaan-section" class="hidden space-y-6">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-shield-halved text-brand-700"></i> Dashboard Kesiswaan & Kedisiplinan
+                    </h2>
+                    <p class="text-xs text-slate-500">Memproses santri rujukan dari BK, memberikan penalti pengurangan poin kedisiplinan, menetapkan sanksi, dan mengabarkan Wali Santri.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="bg-rose-50 border border-rose-200 text-rose-800 px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-2">
+                        <i class="fa-solid fa-triangle-exclamation text-rose-600"></i>
+                        <span>Perlu Tindakan Kesiswaan: <b id="kesiswaanPendingCount">0</b> Santri</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-6" id="kesiswaanListContainer">
+                <!-- Dynamic Items Kesiswaan -->
+            </div>
+        </section>
+
+
+        <!-- ==================== 4. ROLE ORANG TUA ==================== -->
+        <section id="role-ortu-section" class="hidden space-y-6">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-users-between-lines text-sky-600"></i> Portal & Dashboard Orang Tua / Wali Santri
+                    </h2>
+                    <p class="text-xs text-slate-500">Menerima notifikasi login realtime (tepat waktu / terlambat), memantau poin kedisiplinan, dan memberikan konfirmasi.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-semibold text-slate-600">Pilih Santri/Anak:</label>
+                    <select id="ortuSantriFilter" onchange="renderOrtuDashboard()" class="text-xs border border-slate-300 rounded-xl p-2 focus:ring-2 focus:ring-sky-500 focus:outline-none font-semibold text-slate-700">
+                        <!-- Dynamic Options -->
+                    </select>
+                </div>
+            </div>
+
+            <!-- Overview Card Santri -->
+            <div id="ortuOverviewCard" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <!-- Dynamically Rendered Overview Cards -->
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="border-b border-slate-200 px-6 pt-4 flex gap-6 text-sm font-semibold">
+                    <button id="tab-notif-btn" onclick="switchOrtuTab('notif')" class="pb-3 active-tab flex items-center gap-2">
+                        <i class="fa-solid fa-bell"></i> Notifikasi Masuk Realtime
+                    </button>
+                    <button id="tab-riwayat-btn" onclick="switchOrtuTab('riwayat')" class="pb-3 text-slate-500 hover:text-slate-700 flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Catatan Kedisiplinan & Sanksi
+                    </button>
+                </div>
+
+                <div id="ortuNotifTab" class="p-6 space-y-4">
+                    <h4 class="text-xs font-bold text-slate-500 uppercase">Pemberitahuan Otomatis Saat Santri Login</h4>
+                    <div id="ortuNotifList" class="space-y-3">
+                        <!-- Dynamic Notif Items -->
+                    </div>
+                </div>
+
+                <div id="ortuRiwayatTab" class="p-6 space-y-4 hidden">
+                    <h4 class="text-xs font-bold text-slate-500 uppercase">Rekapitulasi Pelanggaran & Tindakan Sekolah</h4>
+                    <div id="ortuRiwayatList" class="space-y-4">
+                        <!-- Dynamic Riwayat Items -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 text-xs py-6 mt-12 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 text-center space-y-2">
+            <p class="font-medium text-slate-300">MA PERSIS 38 Padalarang - Sistem Kedisiplinan Santri Terintegrasi IndexedDB</p>
+            <p class="text-slate-500">Presensi Santri &bull; Guru BK &bull; Kesiswaan &bull; Notifikasi Orang Tua</p>
+        </div>
+    </footer>
+
+    <!-- MODAL TANGGAPAN ORANG TUA -->
+    <div id="modalTanggapan" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl space-y-4 border border-slate-100">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                    <i class="fa-solid fa-comment-dots text-sky-600"></i> Form Konfirmasi Orang Tua / Wali
+                </h3>
+                <button onclick="closeModalTanggapan()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <input type="hidden" id="modalLogId">
+            <div>
+                <p class="text-xs text-slate-600 mb-2">Memberikan tanggapan untuk santri: <b id="modalNamaSantri" class="text-slate-800"></b></p>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Tanggapan / Pesan Orang Tua:</label>
+                <textarea id="modalPesanOrtu" rows="4" class="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-sky-500 focus:outline-none" placeholder="Tuliskan konfirmasi atau tanggapan Bapak/Ibu..."></textarea>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeModalTanggapan()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg">Batal</button>
+                <button onclick="simpanTanggapanOrtu()" class="px-4 py-2 text-xs font-semibold bg-sky-600 hover:bg-sky-700 text-white rounded-lg shadow">Kirim Konfirmasi</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- JAVASCRIPT & INDEXEDDB ENGINE -->
+    <script>
+        // INDEXEDDB ENGINE CONFIGURATION
+        const DB_NAME = 'MAPersis38_KedisiplinanDB';
+        const DB_VERSION = 1;
+        let db = null;
+
+        // Sample Initial Data Seed
+        const INITIAL_SANTRI = [
+            { nis: "2024001", nama: "Ahmad Fauzi", kelas: "MA-11 A", password: "123", poin: 100 },
+            { nis: "2024002", nama: "Siti Maryam", kelas: "MA-10 B", password: "123", poin: 100 },
+            { nis: "2024003", nama: "Muhammad Rizky", kelas: "MA-12 C", password: "123", poin: 100 },
+            { nis: "2024004", nama: "Farah Annisa", kelas: "MA-11 B", password: "123", poin: 100 }
+        ];
+
+        const INITIAL_LOGS = [
+            {
+                id: "LOG-1001",
+                nis: "2024003",
+                nama: "Muhammad Rizky",
+                kelas: "MA-12 C",
+                waktu: "07:25",
+                tanggal: new Date().toLocaleDateString('id-ID'),
+                timestamp: Date.now() - 3600000,
+                status: "Terlambat",
+                alasan: "Macet di jalan Padalarang",
+                bkVerified: true,
+                catatanBk: "Santri sudah diberikan pengarahan kedisiplinan awal oleh BK.",
+                kesiswaanProcessed: true,
+                poinDideduksi: 10,
+                sanksiKesiswaan: "Pembersihan Halaman Masjid & Surat Pernyataan",
+                tanggapanOrtu: "Baik ustadz, kami akan ingatkan dari rumah agar berangkat lebih pagi.",
+                statusTindakan: "Sanksi Ditetapkan"
+            }
+        ];
+
+        // Initialize Application & IndexedDB
+        window.addEventListener('DOMContentLoaded', () => {
+            initIndexedDB().then(() => {
+                setCurrentTime();
+                renderApp();
+            }).catch(err => {
+                console.error("IndexedDB Error:", err);
+                showToast("DB Error", "Gagal menginisialisasi IndexedDB.", "error");
+            });
+        });
+
+        function initIndexedDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+                request.onupgradeneeded = (e) => {
+                    db = e.target.result;
+                    if (!db.objectStoreNames.contains('santri')) {
+                        db.createObjectStore('santri', { keyPath: 'nis' });
+                    }
+                    if (!db.objectStoreNames.contains('logs')) {
+                        db.createObjectStore('logs', { keyPath: 'id' });
+                    }
+                };
+
+                request.onsuccess = (e) => {
+                    db = e.target.result;
+                    checkAndSeedInitialData().then(resolve);
+                };
+
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        // Check & Seed Initial Sample Data
+        async function checkAndSeedInitialData() {
+            const santriCount = await getAllFromDB('santri');
+            if (santriCount.length === 0) {
+                for (const s of INITIAL_SANTRI) {
+                    await saveToDB('santri', s);
+                }
+            }
+            const logCount = await getAllFromDB('logs');
+            if (logCount.length === 0) {
+                for (const l of INITIAL_LOGS) {
+                    await saveToDB('logs', l);
+                }
+            }
+        }
+
+        // Generic IndexedDB CRUD Helpers
+        function saveToDB(storeName, item) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
+                const req = store.put(item);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        function getAllFromDB(storeName) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readonly');
+                const store = tx.objectStore(storeName);
+                const req = store.getAll();
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        function getOneFromDB(storeName, key) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readonly');
+                const store = tx.objectStore(storeName);
+                const req = store.get(key);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function resetIndexedDBData() {
+            if (confirm("Reset seluruh database IndexedDB ke data awal demo?")) {
+                const tx1 = db.transaction('santri', 'readwrite');
+                tx1.objectStore('santri').clear();
+                const tx2 = db.transaction('logs', 'readwrite');
+                tx2.objectStore('logs').clear();
+
+                setTimeout(async () => {
+                    await checkAndSeedInitialData();
+                    renderApp();
+                    showToast("Database Reset", "Database IndexedDB berhasil di-seed ulang.", "info");
+                }, 300);
+            }
+        }
+
+        // Form Utilities: Show/Hide Password Toggle
+        function togglePasswordVisibility() {
+            const pwdInput = document.getElementById('passwordInput');
+            const eyeIcon = document.getElementById('passwordEyeIcon');
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+                eyeIcon.className = 'fa-solid fa-eye-slash';
+            } else {
+                pwdInput.type = 'password';
+                eyeIcon.className = 'fa-solid fa-eye';
+            }
+        }
+
+        function setCurrentTime() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('waktuInput').value = `${h}:${m}`;
+        }
+
+        // Barcode Scanner Simulator
+        async function simulateScan(nis) {
+            const flash = document.getElementById('scanFlash');
+            flash.classList.remove('opacity-0');
+            flash.classList.add('opacity-80');
+            setTimeout(() => flash.classList.remove('opacity-80'), 150);
+
+            const santri = await getOneFromDB('santri', nis);
+            if (santri) {
+                document.getElementById('nisInput').value = santri.nis;
+                document.getElementById('namaInput').value = santri.nama;
+                document.getElementById('passwordInput').value = santri.password || "123";
+                setCurrentTime();
+                showToast("Barcode Terpindai", `Data santri ${santri.nama} berhasil dimuat dari Barcode!`, "success");
+            }
+        }
+
+        // Role View Switcher
+        function switchRole(role) {
+            document.querySelectorAll('.role-btn').forEach(b => {
+                b.className = 'role-btn px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 text-emerald-100 hover:bg-white/10';
+            });
+            const activeBtn = document.getElementById(`nav-${role}`);
+            if (activeBtn) activeBtn.className = 'role-btn px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 bg-brand-600 text-white shadow';
+
+            document.getElementById('role-santri-section').classList.add('hidden');
+            document.getElementById('role-bk-section').classList.add('hidden');
+            document.getElementById('role-kesiswaan-section').classList.add('hidden');
+            document.getElementById('role-ortu-section').classList.add('hidden');
+
+            document.getElementById(`role-${role}-section`).classList.remove('hidden');
+            renderApp();
+        }
+
+        // Global Render App Function
+        async function renderApp() {
+            const logs = (await getAllFromDB('logs')).sort((a,b) => b.timestamp - a.timestamp);
+            const santriList = await getAllFromDB('santri');
+
+            updateBadges(logs);
+            renderSantriTable(logs);
+            renderBkDashboard(logs);
+            renderKesiswaanDashboard(logs, santriList);
+            populateOrtuSelect(santriList);
+            renderOrtuDashboard(logs, santriList);
+        }
+
+        function updateBadges(logs) {
+            const bkPending = logs.filter(l => l.status === 'Terlambat' && !l.bkVerified).length;
+            const kesiswaanPending = logs.filter(l => l.bkVerified && !l.kesiswaanProcessed).length;
+
+            const badgeBk = document.getElementById('badge-bk');
+            const badgeKes = document.getElementById('badge-kesiswaan');
+
+            if (bkPending > 0) {
+                badgeBk.innerText = bkPending;
+                badgeBk.classList.remove('hidden');
+            } else {
+                badgeBk.classList.add('hidden');
+            }
+
+            if (kesiswaanPending > 0) {
+                badgeKes.innerText = kesiswaanPending;
+                badgeKes.classList.remove('hidden');
+            } else {
+                badgeKes.classList.add('hidden');
+            }
+
+            document.getElementById('bkPendingCount').innerText = bkPending;
+            document.getElementById('kesiswaanPendingCount').innerText = kesiswaanPending;
+        }
+
+        // ================= 1. SANTRI LOGIN & PRESENSI HANDLER =================
+        async function handleSantriLogin(e) {
+            e.preventDefault();
+
+            const nis = document.getElementById('nisInput').value.trim();
+            const nama = document.getElementById('namaInput').value.trim();
+            const password = document.getElementById('passwordInput').value;
+            const waktu = document.getElementById('waktuInput').value;
+            const alasan = document.getElementById('alasanInput').value.trim();
+
+            if (!nis || !nama || !waktu) {
+                showToast("Input Kurang", "NIS, Nama, dan Waktu wajib diisi!", "error");
+                return;
+            }
+
+            // Hitung Keterlambatan (> 07:00 WIB)
+            const [hours, minutes] = waktu.split(':').map(Number);
+            const isLate = (hours > 7) || (hours === 7 && minutes > 0);
+            const status = isLate ? "Terlambat" : "Tepat Waktu";
+
+            if (isLate && !alasan) {
+                showToast("Alasan Wajib", "Santri terlambat wajib memberikan alasan keterlambatan!", "warning");
+                return;
+            }
+
+            // Cek atau Simpan Data Santri di DB
+            let santriObj = await getOneFromDB('santri', nis);
+            if (!santriObj) {
+                santriObj = { nis, nama, kelas: 'MA-11 A', password: password || '123', poin: 100 };
+                await saveToDB('santri', santriObj);
+            }
+
+            // Buat Object Log Presensi Baru
+            const newLog = {
+                id: 'LOG-' + Date.now(),
+                nis,
+                nama: santriObj.nama,
+                kelas: santriObj.kelas,
+                waktu,
+                tanggal: new Date().toLocaleDateString('id-ID'),
+                timestamp: Date.now(),
+                status,
+                alasan: isLate ? alasan : '-',
+                bkVerified: false,
+                catatanBk: '',
+                kesiswaanProcessed: false,
+                poinDideduksi: 0,
+                sanksiKesiswaan: '',
+                tanggapanOrtu: '',
+                statusTindakan: isLate ? 'Tercatat di Guru BK' : 'Hadir Tepat Waktu'
+            };
+
+            // Simpan ke IndexedDB
+            await saveToDB('logs', newLog);
+
+            // Reset Form Input
+            document.getElementById('presensiForm').reset();
+            setCurrentTime();
+
+            if (isLate) {
+                showToast("Presensi Terlambat", `Santri ${nama} terlambat (${waktu}). Notifikasi terkirim ke Orang Tua & Data masuk ke Guru BK!`, "warning");
+            } else {
+                showToast("Presensi Tepat Waktu", `Santri ${nama} berhasil login pukul ${waktu} WIB. Notifikasi terkirim ke Orang Tua.`, "success");
+            }
+
+            renderApp();
+        }
+
+        function renderSantriTable(logs) {
+            const tbody = document.getElementById('presensiTableBody');
+            tbody.innerHTML = '';
+
+            if (logs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-400">Belum ada data presensi di IndexedDB.</td></tr>`;
+                return;
+            }
+
+            logs.forEach(log => {
+                const isLate = log.status === 'Terlambat';
+                const statusBadge = isLate 
+                    ? `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700 flex items-center gap-1 w-max"><i class="fa-solid fa-clock-rotate-left"></i> Terlambat (${log.waktu})</span>`
+                    : `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700 flex items-center gap-1 w-max"><i class="fa-solid fa-circle-check"></i> Tepat Waktu (${log.waktu})</span>`;
+
+                let alurBadge = '';
+                if (!isLate) {
+                    alurBadge = `<span class="text-emerald-600 font-semibold text-[11px]"><i class="fa-solid fa-check mr-1"></i> Tepat Waktu (Notif Ortu)</span>`;
+                } else if (!log.bkVerified) {
+                    alurBadge = `<span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-bold"><i class="fa-solid fa-arrow-right"></i> Terkirim ke BK</span>`;
+                } else if (!log.kesiswaanProcessed) {
+                    alurBadge = `<span class="px-2 py-0.5 rounded bg-sky-100 text-sky-800 text-[10px] font-bold"><i class="fa-solid fa-arrow-right"></i> BK -> Kesiswaan</span>`;
+                } else {
+                    alurBadge = `<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold"><i class="fa-solid fa-check-double"></i> Sanksi Ditetapkan (-${log.poinDideduksi} Poin)</span>`;
+                }
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition";
+                tr.innerHTML = `
+                    <td class="py-3 px-3 font-mono font-medium">${log.tanggal} | ${log.waktu} WIB</td>
+                    <td class="py-3 px-3">
+                        <div class="font-bold text-slate-800">${log.nama}</div>
+                        <div class="text-[10px] text-slate-400 font-mono">NIS: ${log.nis}</div>
+                    </td>
+                    <td class="py-3 px-3 font-semibold text-slate-700">${log.kelas}</td>
+                    <td class="py-3 px-3">${statusBadge}</td>
+                    <td class="py-3 px-3">${alurBadge}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // ================= 2. GURU BK LOGIC =================
+        function renderBkDashboard(logs) {
+            const container = document.getElementById('bkListContainer');
+            container.innerHTML = '';
+
+            const bkLogs = logs.filter(l => l.status === 'Terlambat');
+
+            if (bkLogs.length === 0) {
+                container.innerHTML = `
+                    <div class="p-8 text-center text-slate-400">
+                        <i class="fa-solid fa-circle-check text-3xl mb-2 text-emerald-500"></i>
+                        <p class="text-xs">Tidak ada data santri terlambat saat ini.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            bkLogs.forEach(log => {
+                const isPending = !log.bkVerified;
+                const item = document.createElement('div');
+                item.className = `p-5 ${isPending ? 'bg-amber-50/50' : 'bg-white'} border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4`;
+
+                item.innerHTML = `
+                    <div class="space-y-2 max-w-xl">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="font-extrabold text-sm text-slate-800">${log.nama}</span>
+                            <span class="text-xs px-2 py-0.5 bg-slate-100 text-slate-600 font-mono rounded">${log.nis}</span>
+                            <span class="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded">${log.kelas}</span>
+                            <span class="text-xs px-2 py-0.5 bg-rose-100 text-rose-700 font-bold rounded">Jam: ${log.waktu} WIB</span>
+                        </div>
+                        <p class="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                            <b>Alasan Keterlambatan Santri:</b> "${log.alasan}"
+                        </p>
+                        ${log.catatanBk ? `
+                            <p class="text-xs text-emerald-800 bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">
+                                <i class="fa-solid fa-user-doctor mr-1"></i> <b>Catatan BK:</b> ${log.catatanBk}
+                            </p>
+                        ` : ''}
+                    </div>
+
+                    <div class="flex-shrink-0">
+                        ${isPending ? `
+                            <div class="space-y-2 w-full md:w-64">
+                                <input type="text" id="catatan-bk-${log.id}" placeholder="Input catatan bimbingan BK..." class="w-full text-xs border border-slate-300 rounded-xl p-2 focus:ring-1 focus:ring-brand-500">
+                                <button onclick="teruskanKeKesiswaan('${log.id}')" class="w-full bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold py-2 px-3 rounded-xl shadow transition flex items-center justify-center gap-1.5">
+                                    <i class="fa-solid fa-paper-plane"></i> Verifikasi & Meneruskan ke Kesiswaan
+                                </button>
+                            </div>
+                        ` : `
+                            <div class="text-right space-y-1">
+                                <span class="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                                    <i class="fa-solid fa-circle-check"></i> Telah Diteruskan ke Kesiswaan
+                                </span>
+                            </div>
+                        `}
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        async function teruskanKeKesiswaan(logId) {
+            const catatanInput = document.getElementById(`catatan-bk-${logId}`).value.trim();
+            const log = await getOneFromDB('logs', logId);
+
+            if (log) {
+                log.bkVerified = true;
+                log.catatanBk = catatanInput || "Santri terlambat telah diberi pengarahan motivasi kedisiplinan awal.";
+                log.statusTindakan = "Diteruskan ke Kesiswaan";
+
+                await saveToDB('logs', log);
+                showToast("Diteruskan ke Kesiswaan", `Laporan santri ${log.nama} berhasil dikirim ke Kesiswaan!`, "success");
+                renderApp();
+            }
+        }
+
+        // ================= 3. KESISWAAN LOGIC =================
+        function renderKesiswaanDashboard(logs, santriList) {
+            const container = document.getElementById('kesiswaanListContainer');
+            container.innerHTML = '';
+
+            const kesiswaanLogs = logs.filter(l => l.bkVerified);
+
+            if (kesiswaanLogs.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white rounded-2xl p-8 text-center text-slate-400 border border-slate-200">
+                        <i class="fa-solid fa-shield-check text-3xl mb-2 text-slate-300"></i>
+                        <p class="text-xs">Belum ada rujukan santri dari BK yang membutuhkan tindakan Kesiswaan.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            kesiswaanLogs.forEach(log => {
+                const isProcessed = log.kesiswaanProcessed;
+                const santri = santriList.find(s => s.nis === log.nis) || { poin: 100 };
+
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4";
+
+                card.innerHTML = `
+                    <div class="flex flex-col md:flex-row md:items-center justify-between border-b pb-3 gap-2">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="font-extrabold text-base text-slate-800">${log.nama}</h3>
+                                <span class="text-xs px-2 py-0.5 bg-slate-100 font-mono text-slate-600 rounded">${log.nis}</span>
+                                <span class="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded">${log.kelas}</span>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-1">Terlambat jam: <b>${log.waktu} WIB</b> | Alasan: "${log.alasan}"</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs text-slate-500">Sisa Poin Kedisiplinan:</span>
+                            <div class="text-lg font-extrabold ${santri.poin < 80 ? 'text-rose-600' : 'text-emerald-600'}">${santri.poin} / 100 Poin</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-3 rounded-xl text-xs space-y-1 border border-slate-200">
+                        <div class="font-bold text-slate-700"><i class="fa-solid fa-user-doctor text-emerald-600"></i> Catatan Konseling BK:</div>
+                        <div class="text-slate-600 italic">"${log.catatanBk}"</div>
+                    </div>
+
+                    ${!isProcessed ? `
+                        <div class="bg-amber-50/60 p-4 rounded-xl border border-amber-200 space-y-3">
+                            <h4 class="text-xs font-bold text-amber-900 uppercase">Form Tindakan & Penalti Poin Kesiswaan</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Pengurangan Poin</label>
+                                    <select id="poin-deduct-${log.id}" class="w-full text-xs border border-slate-300 rounded-xl p-2 focus:ring-1 focus:ring-brand-500 font-bold">
+                                        <option value="5">-5 Poin (Ringan)</option>
+                                        <option value="10" selected>-10 Poin (Sedang)</option>
+                                        <option value="15">-15 Poin (Berat)</option>
+                                    </select>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Bentuk Sanksi Pembinaan</label>
+                                    <input type="text" id="sanksi-${log.id}" placeholder="Contoh: Pembersihan Halaman & Hafalan Surah" class="w-full text-xs border border-slate-300 rounded-xl p-2 focus:ring-1 focus:ring-brand-500">
+                                </div>
+                            </div>
+                            <div class="flex justify-end pt-1">
+                                <button onclick="prosesTindakanKesiswaan('${log.id}')" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold py-2 px-4 rounded-xl shadow transition flex items-center gap-1.5">
+                                    <i class="fa-solid fa-gavel"></i> Tetapkan Sanksi & Kurangi Poin
+                                </button>
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                            <div class="space-y-1">
+                                <span class="text-[11px] font-bold uppercase text-emerald-800"><i class="fa-solid fa-circle-check"></i> Tindakan Kesiswaan Selesai</span>
+                                <div class="text-xs text-emerald-900"><b>Sanksi:</b> ${log.sanksiKesiswaan}</div>
+                                <div class="text-xs text-rose-700 font-bold">Pengurangan Poin: -${log.poinDideduksi} Poin (Tersimpan)</div>
+                            </div>
+                            ${log.tanggapanOrtu ? `
+                                <div class="bg-white p-2.5 rounded-xl border border-emerald-200 text-xs max-w-xs">
+                                    <div class="font-bold text-sky-700"><i class="fa-solid fa-comments"></i> Tanggapan Wali Santri:</div>
+                                    <div class="text-slate-600 italic">"${log.tanggapanOrtu}"</div>
+                                </div>
+                            ` : `<span class="text-xs text-slate-400 italic">Menunggu konfirmasi Wali Santri</span>`}
+                        </div>
+                    `}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        async function prosesTindakanKesiswaan(logId) {
+            const poinDeduct = parseInt(document.getElementById(`poin-deduct-${logId}`).value) || 10;
+            const sanksi = document.getElementById(`sanksi-${logId}`).value.trim() || "Pembinaan Kedisiplinan Kesiswaan";
+
+            const log = await getOneFromDB('logs', logId);
+            if (log) {
+                const santri = await getOneFromDB('santri', log.nis);
+                if (santri) {
+                    santri.poin = Math.max(0, santri.poin - poinDeduct);
+                    await saveToDB('santri', santri);
+                }
+
+                log.kesiswaanProcessed = true;
+                log.poinDideduksi = poinDeduct;
+                log.sanksiKesiswaan = sanksi;
+                log.statusTindakan = "Sanksi Ditetapkan";
+
+                await saveToDB('logs', log);
+                showToast("Sanksi Ditetapkan", `Pengurangan -${poinDeduct} poin & sanksi untuk ${log.nama} disimpan ke IndexedDB dan terkirim ke Orang Tua!`, "success");
+                renderApp();
+            }
+        }
+
+        // ================= 4. ORANG TUA LOGIC =================
+        function populateOrtuSelect(santriList) {
+            const select = document.getElementById('ortuSantriFilter');
+            const currentVal = select.value;
+            select.innerHTML = '';
+
+            santriList.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.nis;
+                opt.innerText = `${s.nama} (${s.kelas})`;
+                select.appendChild(opt);
+            });
+
+            if (currentVal && santriList.some(s => s.nis === currentVal)) {
+                select.value = currentVal;
+            }
+        }
+
+        function renderOrtuDashboard(logs, santriList) {
+            const nis = document.getElementById('ortuSantriFilter').value;
+            if (!nis) return;
+
+            const santri = santriList.find(s => s.nis === nis);
+            if (!santri) return;
+
+            const logsSantri = logs.filter(l => l.nis === nis);
+            const totalHadir = logsSantri.length;
+            const totalTerlambat = logsSantri.filter(l => l.status === 'Terlambat').length;
+
+            // Overview Cards
+            const overviewCard = document.getElementById('ortuOverviewCard');
+            overviewCard.innerHTML = `
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">
+                    <div class="w-10 h-10 bg-brand-100 text-brand-700 rounded-xl flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-user-graduate text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500">Nama Santri</div>
+                        <div class="font-extrabold text-slate-800 text-sm">${santri.nama}</div>
+                        <div class="text-[10px] text-slate-400">NIS: ${santri.nis} | Kelas: ${santri.kelas}</div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">
+                    <div class="w-10 h-10 ${santri.poin < 80 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'} rounded-xl flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-star text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500">Sisa Poin Kedisiplinan</div>
+                        <div class="font-extrabold text-lg ${santri.poin < 80 ? 'text-rose-600' : 'text-emerald-600'}">${santri.poin} / 100</div>
+                        <div class="text-[10px] text-slate-400">Standard awal: 100 Poin</div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">
+                    <div class="w-10 h-10 bg-sky-100 text-sky-700 rounded-xl flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-calendar-check text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500">Total Login Presensi</div>
+                        <div class="font-extrabold text-slate-800 text-lg">${totalHadir} Kali</div>
+                        <div class="text-[10px] text-slate-400">Data terverifikasi</div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">
+                    <div class="w-10 h-10 bg-amber-100 text-amber-700 rounded-xl flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500">Keterlambatan</div>
+                        <div class="font-extrabold text-amber-600 text-lg">${totalTerlambat} Kali</div>
+                        <div class="text-[10px] text-slate-400">Notifikasi otomatis</div>
+                    </div>
+                </div>
+            `;
+
+            // Notifikasi Tab
+            const notifContainer = document.getElementById('ortuNotifList');
+            notifContainer.innerHTML = '';
+
+            if (logsSantri.length === 0) {
+                notifContainer.innerHTML = `<p class="text-xs text-slate-400 italic">Belum ada notifikasi aktivitas login santri.</p>`;
+            } else {
+                logsSantri.forEach(log => {
+                    const isLate = log.status === 'Terlambat';
+                    const notifCard = document.createElement('div');
+                    notifCard.className = `p-4 rounded-xl border ${isLate ? 'bg-rose-50/50 border-rose-200' : 'bg-emerald-50/50 border-emerald-200'} flex items-start gap-3`;
+
+                    notifCard.innerHTML = `
+                        <div class="w-8 h-8 ${isLate ? 'bg-rose-500' : 'bg-emerald-500'} text-white rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <i class="fa-solid ${isLate ? 'fa-bell' : 'fa-check'} text-sm"></i>
+                        </div>
+                        <div class="space-y-1 flex-grow">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-bold ${isLate ? 'text-rose-800' : 'text-emerald-800'}">
+                                    Notifikasi Login: ${log.status}
+                                </span>
+                                <span class="text-[10px] text-slate-400 font-mono">${log.tanggal} | ${log.waktu} WIB</span>
+                            </div>
+                            <p class="text-xs text-slate-600">
+                                Ananda <b>${log.nama}</b> telah melakukan login presensi pada jam <b>${log.waktu} WIB</b> dengan status <b class="${isLate ? 'text-rose-600' : 'text-emerald-600'}">${log.status}</b>.
+                            </p>
+                            ${isLate ? `<div class="text-[11px] text-rose-700 italic">Alasan dicatat: "${log.alasan}"</div>` : ''}
+                        </div>
+                    `;
+                    notifContainer.appendChild(notifCard);
+                });
+            }
+
+            // Riwayat & Tanggapan Tab
+            const riwayatContainer = document.getElementById('ortuRiwayatList');
+            riwayatContainer.innerHTML = '';
+
+            const logsTerlambat = logsSantri.filter(l => l.status === 'Terlambat');
+
+            if (logsTerlambat.length === 0) {
+                riwayatContainer.innerHTML = `<p class="text-xs text-slate-400 italic">Alhamdulillah, tidak ada catatan sanksi/keterlambatan.</p>`;
+            } else {
+                logsTerlambat.forEach(log => {
+                    const riwayatCard = document.createElement('div');
+                    riwayatCard.className = "p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-3";
+
+                    riwayatCard.innerHTML = `
+                        <div class="flex justify-between items-start border-b pb-2">
+                            <div>
+                                <span class="text-xs font-bold text-slate-800">Laporan Keterlambatan (${log.tanggal} - ${log.waktu} WIB)</span>
+                                <div class="text-[11px] text-slate-500">Alasan: "${log.alasan}"</div>
+                            </div>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${log.kesiswaanProcessed ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-800'}">
+                                ${log.statusTindakan}
+                            </span>
+                        </div>
+
+                        <div class="text-xs space-y-1">
+                            <span class="font-semibold text-emerald-800"><i class="fa-solid fa-user-doctor"></i> Catatan BK:</span>
+                            <p class="text-slate-600 italic bg-white p-2 rounded-lg border border-slate-200">${log.catatanBk || 'Proses bimbingan BK...'}</p>
+                        </div>
+
+                        ${log.kesiswaanProcessed ? `
+                            <div class="text-xs space-y-1 bg-rose-50 p-3 rounded-lg border border-rose-200">
+                                <span class="font-bold text-rose-900"><i class="fa-solid fa-gavel"></i> Penalti & Sanksi Kesiswaan:</span>
+                                <div class="text-slate-700"><b>Sanksi:</b> ${log.sanksiKesiswaan}</div>
+                                <div class="text-rose-700 font-bold">Penalti: -${log.poinDideduksi} Poin Kedisiplinan</div>
+                            </div>
+                        ` : ''}
+
+                        <div class="pt-1 flex items-center justify-between">
+                            ${log.tanggapanOrtu ? `
+                                <div class="text-xs text-slate-600 bg-sky-50 p-2.5 rounded-lg border border-sky-200 w-full">
+                                    <span class="font-bold text-sky-800"><i class="fa-solid fa-comment"></i> Tanggapan/Konfirmasi Anda:</span>
+                                    <p class="italic mt-0.5">"${log.tanggapanOrtu}"</p>
+                                </div>
+                            ` : `
+                                ${log.kesiswaanProcessed ? `
+                                    <button onclick="openModalTanggapan('${log.id}', '${log.nama}')" class="bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold py-1.5 px-3 rounded-lg shadow transition flex items-center gap-1">
+                                        <i class="fa-solid fa-pen-to-square"></i> Berikan Konfirmasi Wali
+                                    </button>
+                                ` : '<span class="text-[11px] text-slate-400 italic">Menunggu penetapan sanksi Kesiswaan</span>'}
+                            `}
+                        </div>
+                    `;
+                    riwayatContainer.appendChild(riwayatCard);
+                });
+            }
+        }
+
+        function switchOrtuTab(tab) {
+            const notifTab = document.getElementById('ortuNotifTab');
+            const riwayatTab = document.getElementById('ortuRiwayatTab');
+            const notifBtn = document.getElementById('tab-notif-btn');
+            const riwayatBtn = document.getElementById('tab-riwayat-btn');
+
+            if (tab === 'notif') {
+                notifTab.classList.remove('hidden');
+                riwayatTab.classList.add('hidden');
+                notifBtn.className = "pb-3 active-tab flex items-center gap-2";
+                riwayatBtn.className = "pb-3 text-slate-500 hover:text-slate-700 flex items-center gap-2";
+            } else {
+                notifTab.classList.add('hidden');
+                riwayatTab.classList.remove('hidden');
+                riwayatBtn.className = "pb-3 active-tab flex items-center gap-2";
+                notifBtn.className = "pb-3 text-slate-500 hover:text-slate-700 flex items-center gap-2";
+            }
+        }
+
+        // Modal Handler
+        function openModalTanggapan(logId, nama) {
+            document.getElementById('modalLogId').value = logId;
+            document.getElementById('modalNamaSantri').innerText = nama;
+            document.getElementById('modalPesanOrtu').value = '';
+            document.getElementById('modalTanggapan').classList.remove('hidden');
+        }
+
+        function closeModalTanggapan() {
+            document.getElementById('modalTanggapan').classList.add('hidden');
+        }
+
+        async function simpanTanggapanOrtu() {
+            const logId = document.getElementById('modalLogId').value;
+            const pesan = document.getElementById('modalPesanOrtu').value.trim();
+
+            if (!pesan) {
+                showToast("Peringatan", "Harap isi tanggapan Wali Santri!", "warning");
+                return;
+            }
+
+            const log = await getOneFromDB('logs', logId);
+            if (log) {
+                log.tanggapanOrtu = pesan;
+                await saveToDB('logs', log);
+                closeModalTanggapan();
+                showToast("Tanggapan Tersimpan", "Tanggapan Wali Santri berhasil disimpan di IndexedDB.", "success");
+                renderApp();
+            }
+        }
+
+        // Custom Toast Helper
+        function showToast(title, message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+
+            const bgColors = {
+                success: 'bg-emerald-900 text-white border-emerald-700',
+                warning: 'bg-amber-900 text-white border-amber-700',
+                error: 'bg-rose-900 text-white border-rose-700',
+                info: 'bg-slate-900 text-white border-slate-700'
+            };
+
+            const icons = {
+                success: 'fa-circle-check text-emerald-400',
+                warning: 'fa-triangle-exclamation text-amber-400',
+                error: 'fa-circle-xmark text-rose-400',
+                info: 'fa-circle-info text-sky-400'
+            };
+
+            toast.className = `p-4 rounded-xl border shadow-xl flex items-start gap-3 pointer-events-auto transition-all transform duration-300 ${bgColors[type] || bgColors.info}`;
+            toast.innerHTML = `
+                <i class="fa-solid ${icons[type]} text-lg mt-0.5"></i>
+                <div class="space-y-0.5 flex-grow">
+                    <h5 class="text-xs font-bold">${title}</h5>
+                    <p class="text-xs text-slate-200 leading-snug">${message}</p>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => toast.remove(), 300);
+            }, 4500);
+        }
+    </script>
+</body>
+</html>
